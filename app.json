@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "SMS Forwarder MVP",
+    "slug": "sms-forwarder-mvp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.smsforwarder",
+      "permissions": [
+        "RECEIVE_SMS",
+        "READ_SMS",
+        "FOREGROUND_SERVICE",
+        "POST_NOTIFICATIONS",
+        "INTERNET"
+      ]
+    },
+    "plugins": []
+  }
+}
