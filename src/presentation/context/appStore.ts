@@ -96,8 +96,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   testConnection: async () => {
-    await container.usecases.sendTelegramTest.execute();
-    await get().refreshEvents();
+    try {
+      await container.usecases.sendTelegramTest.execute();
+      await get().refreshEvents();
+    } catch (error) {
+      await get().refreshEvents();
+      throw error;
+    }
   },
 
   createRule: async (input) => {

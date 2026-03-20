@@ -11,8 +11,11 @@ interface SmsForegroundModuleShape {
   stopService(): Promise<void>;
 }
 
-const LINKING_ERROR =
-  'SmsForegroundModule is unavailable. Make sure Android native module is linked in bare workflow.';
+const isWeb = Platform.OS === 'web';
+
+const LINKING_ERROR = isWeb
+  ? 'SMS interception unavailable on web. Use Android app for native SMS features.'
+  : 'SmsForegroundModule is unavailable. Make sure Android native module is linked in bare workflow.';
 
 const smsModule: SmsForegroundModuleShape | null =
   Platform.OS === 'android'
@@ -24,14 +27,20 @@ const emitter = smsModule ? new NativeEventEmitter(NativeModules.SmsForegroundMo
 export const SmsNativeBridge = {
   async startService(): Promise<void> {
     if (!smsModule) {
-      throw new Error(LINKING_ERROR);
+      if (!isWeb) {
+        throw new Error(LINKING_ERROR);
+      }
+      return;
     }
     await smsModule.startService();
   },
 
   async stopService(): Promise<void> {
     if (!smsModule) {
-      throw new Error(LINKING_ERROR);
+      if (!isWeb) {
+        throw new Error(LINKING_ERROR);
+      }
+      return;
     }
     await smsModule.stopService();
   },

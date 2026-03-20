@@ -72,13 +72,20 @@ En este entorno, la version mas actual instalada es Node 20.19.6.
 
 volta run --node 20.19.6 npm install
 
-### 2) Generar proyecto nativo (si aun no esta completo)
+### 2a) Opcion A: Ejecutar en Web (sin SDK requerido)
 
-volta run --node 20.19.6 npx expo prebuild --platform android
+volta run --node 20.19.6 npx expo start --web
 
-Nota: este repositorio ya incluye componentes nativos clave (receiver, service y module), pero prebuild asegura gradle y archivos Android completos en entornos nuevos.
+Esto abrira la app en http://localhost:19006. Podras gestionar reglas, configuracion y eventos. 
+**Nota:** La intercepcion de SMS solo funciona en Android nativo.
 
-### 3) Ejecutar en Android
+### 2b) Opcion B: Ejecutar en Android (requiere SDK)
+
+Generar proyecto nativo:
+
+volta run --node 20.19.6 npx expo prebuild --platform android --clean
+
+Ejecutar en emulador o dispositivo:
 
 volta run --node 20.19.6 npx expo run:android
 

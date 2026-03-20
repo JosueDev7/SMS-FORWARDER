@@ -14,8 +14,19 @@ export class TelegramApiClient implements TelegramGateway {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Telegram API error: ${response.status} ${errorText}`);
+      const raw = await response.text();
+      let details = raw;
+
+      try {
+        const parsed = JSON.parse(raw) as { description?: string };
+        if (parsed.description) {
+          details = parsed.description;
+        }
+      } catch {
+        // Keep original response text when body is not valid JSON.
+      }
+
+      throw new Error(`No se pudo conectar con Telegram (${response.status}): ${details}`);
     }
   }
 }
