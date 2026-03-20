@@ -1,6 +1,7 @@
 node_modules/
 .expo/
 .expo-shared/
+.gradle-home/
 android/.gradle/
 android/app/build/
 coverage/

@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'SMS Forwarder MVP'
+rootProject.name = 'SMSForwarderMVP'
 
 dependencyResolutionManagement {
   versionCatalogs {
