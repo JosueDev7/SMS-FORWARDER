@@ -2,6 +2,7 @@ import { container } from '@application/di/container';
 import { Rule } from '@domain/entities/Rule';
 import { EventLog } from '@domain/entities/EventLog';
 import { InterceptedMessage } from '@domain/entities/InterceptedMessage';
+import { TelegramLink } from '@domain/entities/Config';
 import { SMS } from '@domain/entities/SMS';
 import { SmsNativeBridge } from '@infrastructure/native/SmsNativeBridge';
 import { generateId } from '@shared/utils/id';
@@ -14,16 +15,18 @@ interface AppState {
   rules: Rule[];
   events: EventLog[];
   messages: InterceptedMessage[];
-  telegramBotToken: string;
-  telegramChatId: string;
+  telegramLinks: TelegramLink[];
   serviceEnabled: boolean;
   loading: boolean;
   nativeLinked: boolean;
   init: () => Promise<void>;
   bindSmsListener: () => () => void;
   toggleService: (enabled: boolean) => Promise<void>;
-  saveSettings: (params: { token: string; chatId: string }) => Promise<void>;
-  testConnection: () => Promise<void>;
+  addTelegramLink: (input: { label: string; botToken: string; chatId: string }) => Promise<void>;
+  updateTelegramLink: (link: TelegramLink) => Promise<void>;
+  removeTelegramLink: (id: string) => Promise<void>;
+  testLink: (linkId: string) => Promise<void>;
+  testAllLinks: () => Promise<void>;
   createRule: (input: Omit<Rule, 'id'>) => Promise<void>;
   updateRule: (rule: Rule) => Promise<void>;
   deleteRule: (id: string) => Promise<void>;
@@ -36,8 +39,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   rules: [],
   events: [],
   messages: [],
-  telegramBotToken: '',
-  telegramChatId: '',
+  telegramLinks: [],
   serviceEnabled: false,
   loading: false,
   nativeLinked: true,
@@ -54,13 +56,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({
       rules,
-      telegramChatId: config.telegramChatId,
+      telegramLinks: config.telegramLinks,
       serviceEnabled: config.serviceEnabled,
       events,
       messages,
       loading: false,
     });
-    logger.info(TAG, `Store inicializado. ${rules.length} regla(s), serviceEnabled=${String(config.serviceEnabled)}`);
+    logger.info(TAG, `Store init OK. ${rules.length} regla(s), ${config.telegramLinks.length} link(s), serviceEnabled=${String(config.serviceEnabled)}`);
   },
 
   bindSmsListener: () => {
@@ -101,30 +103,34 @@ export const useAppStore = create<AppState>((set, get) => ({
     await Promise.all([get().refreshEvents(), get().refreshMessages()]);
   },
 
-  saveSettings: async ({ token, chatId }) => {
-    logger.info(TAG, `saveSettings → chatId=${chatId}`);
-    await container.usecases.manageConfig.update({
-      telegramBotToken: token,
-      telegramChatId: chatId,
-    });
-
-    set({
-      telegramBotToken: token,
-      telegramChatId: chatId,
-    });
+  addTelegramLink: async (input) => {
+    logger.info(TAG, `addTelegramLink → "${input.label}"`);
+    const config = await container.usecases.manageConfig.addLink(input);
+    set({ telegramLinks: config.telegramLinks });
   },
 
-  testConnection: async () => {
-    logger.info(TAG, 'testConnection iniciado.');
-    try {
-      await container.usecases.sendTelegramTest.execute();
-      logger.info(TAG, 'testConnection OK.');
-      await get().refreshEvents();
-    } catch (error) {
-      logger.error(TAG, `testConnection FAIL: ${String(error)}`);
-      await get().refreshEvents();
-      throw error;
-    }
+  updateTelegramLink: async (link) => {
+    logger.info(TAG, `updateTelegramLink → "${link.label}" (${link.id})`);
+    const config = await container.usecases.manageConfig.updateLink(link);
+    set({ telegramLinks: config.telegramLinks });
+  },
+
+  removeTelegramLink: async (id) => {
+    logger.info(TAG, `removeTelegramLink → ${id}`);
+    const config = await container.usecases.manageConfig.removeLink(id);
+    set({ telegramLinks: config.telegramLinks });
+  },
+
+  testLink: async (linkId) => {
+    logger.info(TAG, `testLink → ${linkId}`);
+    await container.usecases.sendTelegramTest.executeForLink(linkId);
+    await get().refreshEvents();
+  },
+
+  testAllLinks: async () => {
+    logger.info(TAG, 'testAllLinks');
+    await container.usecases.sendTelegramTest.execute();
+    await get().refreshEvents();
   },
 
   createRule: async (input) => {

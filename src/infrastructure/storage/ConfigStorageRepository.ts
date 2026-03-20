@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '@infrastructure/storage/keys';
 const DEFAULT_CONFIG: Config = {
   telegramBotTokenBase64: '',
   telegramChatId: '',
+  telegramLinks: [],
   serviceEnabled: false,
 };
 
@@ -15,7 +16,36 @@ export class ConfigStorageRepository implements ConfigRepository {
     if (!raw) {
       return DEFAULT_CONFIG;
     }
-    return JSON.parse(raw) as Config;
+    const parsed = JSON.parse(raw) as Partial<Config>;
+
+    // Migration: if old config has no telegramLinks, create one from legacy fields.
+    if (!parsed.telegramLinks) {
+      const links =
+        parsed.telegramBotTokenBase64 && parsed.telegramChatId
+          ? [
+              {
+                id: 'migrated-1',
+                label: 'Principal',
+                botTokenBase64: parsed.telegramBotTokenBase64,
+                chatId: parsed.telegramChatId,
+                enabled: true,
+              },
+            ]
+          : [];
+      return {
+        telegramBotTokenBase64: parsed.telegramBotTokenBase64 ?? '',
+        telegramChatId: parsed.telegramChatId ?? '',
+        telegramLinks: links,
+        serviceEnabled: parsed.serviceEnabled ?? false,
+      };
+    }
+
+    return {
+      telegramBotTokenBase64: parsed.telegramBotTokenBase64 ?? '',
+      telegramChatId: parsed.telegramChatId ?? '',
+      telegramLinks: parsed.telegramLinks,
+      serviceEnabled: parsed.serviceEnabled ?? false,
+    };
   }
 
   async save(config: Config): Promise<void> {

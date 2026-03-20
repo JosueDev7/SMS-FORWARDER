@@ -98,15 +98,15 @@ export class ProcessIncomingSMS {
 
     logger.info(TAG, `SMS de ${sms.sender} coincide con regla. Reenviando a Telegram...`);
 
-    const decodedToken = decodeBase64(config.telegramBotTokenBase64);
-    if (!decodedToken || !config.telegramChatId) {
-      logger.error(TAG, 'Token o chatId no configurados.');
+    const enabledLinks = config.telegramLinks.filter((l) => l.enabled);
+    if (enabledLinks.length === 0) {
+      logger.error(TAG, 'No hay Telegram links activos configurados.');
       const now = Date.now();
       await Promise.all([
         eventRepository.append({
           id: generateId(),
           type: 'ERROR',
-          message: 'Token o chatId no configurados.',
+          message: 'No hay Telegram links activos configurados.',
           smsId: sms.id,
           createdAt: now,
         }),
@@ -116,27 +116,47 @@ export class ProcessIncomingSMS {
           body: sms.body,
           receivedAt: sms.receivedAt,
           status: 'ERROR',
-          statusDetail: 'Token o chatId no configurados.',
+          statusDetail: 'No hay Telegram links activos.',
           processedAt: now,
         }),
       ]);
       return;
     }
 
-    try {
-      await telegramGateway.sendMessage({
-        botToken: decodedToken,
-        chatId: config.telegramChatId,
-        text: `Nuevo SMS\nDe: ${sms.sender}\nTexto: ${sms.body}`,
-      });
+    const text = `📩 Nuevo SMS\nDe: ${sms.sender}\nTexto: ${sms.body}`;
+    let anySuccess = false;
+    const errors: string[] = [];
 
-      logger.info(TAG, `SMS reenviado a Telegram exitosamente.`);
-      const now = Date.now();
+    for (const link of enabledLinks) {
+      const decodedToken = decodeBase64(link.botTokenBase64);
+      if (!decodedToken || !link.chatId) {
+        errors.push(`Link "${link.label}": token o chatId vacío.`);
+        continue;
+      }
+
+      try {
+        await telegramGateway.sendMessage({
+          botToken: decodedToken,
+          chatId: link.chatId,
+          text,
+        });
+        logger.info(TAG, `SMS reenviado a "${link.label}" OK.`);
+        anySuccess = true;
+      } catch (error) {
+        const msg = `Link "${link.label}": ${String(error)}`;
+        logger.error(TAG, msg);
+        errors.push(msg);
+      }
+    }
+
+    const now = Date.now();
+    if (anySuccess) {
+      const detail = errors.length > 0 ? ` (${errors.length} fallido(s))` : '';
       await Promise.all([
         eventRepository.append({
           id: generateId(),
           type: 'FORWARDED',
-          message: 'SMS reenviado a Telegram.',
+          message: `SMS reenviado a Telegram${detail}.`,
           smsId: sms.id,
           createdAt: now,
         }),
@@ -146,17 +166,16 @@ export class ProcessIncomingSMS {
           body: sms.body,
           receivedAt: sms.receivedAt,
           status: 'FORWARDED',
+          statusDetail: errors.length > 0 ? errors.join('; ') : undefined,
           processedAt: now,
         }),
       ]);
-    } catch (error) {
-      logger.error(TAG, `Error reenviando SMS: ${String(error)}`);
-      const now = Date.now();
+    } else {
       await Promise.all([
         eventRepository.append({
           id: generateId(),
           type: 'ERROR',
-          message: `Error reenviando SMS: ${String(error)}`,
+          message: `Error reenviando SMS: ${errors.join('; ')}`,
           smsId: sms.id,
           createdAt: now,
         }),
@@ -166,7 +185,7 @@ export class ProcessIncomingSMS {
           body: sms.body,
           receivedAt: sms.receivedAt,
           status: 'ERROR',
-          statusDetail: String(error),
+          statusDetail: errors.join('; '),
           processedAt: now,
         }),
       ]);
