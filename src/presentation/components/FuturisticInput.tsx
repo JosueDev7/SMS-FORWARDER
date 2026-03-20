@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '@presentation/theme/colors';
+import { useTheme } from '@presentation/theme/ThemeContext';
+import { ThemeColors } from '@presentation/theme/colors';
 
 interface Props {
   label: string;
@@ -17,13 +18,16 @@ export const FuturisticInput: React.FC<Props> = ({
   secureTextEntry,
   onChangeText,
 }) => {
+  const { t } = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         value={value}
         placeholder={placeholder}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={t.textMuted}
         secureTextEntry={secureTextEntry}
         onChangeText={onChangeText}
         style={styles.input}
@@ -32,21 +36,22 @@ export const FuturisticInput: React.FC<Props> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  wrapper: {
-    marginBottom: 10,
-  },
-  label: {
-    color: colors.textMuted,
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    color: colors.text,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: colors.bgSoft,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: {
+      marginBottom: 10,
+    },
+    label: {
+      color: c.textMuted,
+      marginBottom: 6,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 10,
+      color: c.text,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: c.bgSoft,
+    },
+  });

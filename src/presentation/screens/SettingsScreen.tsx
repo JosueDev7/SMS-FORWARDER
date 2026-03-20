@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -11,8 +11,9 @@ import {
 import { FuturisticInput } from '@presentation/components/FuturisticInput';
 import { NeonButton } from '@presentation/components/NeonButton';
 import { useAppStore } from '@presentation/context/appStore';
-import { globalStyles } from '@presentation/theme/globalStyles';
-import { colors } from '@presentation/theme/colors';
+import { useGlobalStyles } from '@presentation/theme/globalStyles';
+import { useTheme } from '@presentation/theme/ThemeContext';
+import { ThemeColors } from '@presentation/theme/colors';
 import { TelegramLink } from '@domain/entities/Config';
 
 const normalizeError = (error: unknown): string => {
@@ -25,6 +26,9 @@ interface LinkCardProps {
 }
 
 const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
+  const { t } = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   const updateTelegramLink = useAppStore((s) => s.updateTelegramLink);
   const removeTelegramLink = useAppStore((s) => s.removeTelegramLink);
   const testLink = useAppStore((s) => s.testLink);
@@ -58,8 +62,8 @@ const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
         <Switch
           value={link.enabled}
           onValueChange={(v) => void updateTelegramLink({ ...link, enabled: v })}
-          trackColor={{ false: '#31425A', true: colors.accentSoft }}
-          thumbColor={link.enabled ? colors.accent : '#A4B6D4'}
+          trackColor={{ false: t.switchTrackOff, true: t.accentSoft }}
+          thumbColor={link.enabled ? t.accent : t.switchThumbOff}
         />
       </View>
       <Text style={styles.linkDetail}>Chat ID: {link.chatId}</Text>
@@ -67,10 +71,10 @@ const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
 
       <View style={styles.linkActions}>
         <Pressable style={styles.linkActionBtn} onPress={handleTest}>
-          <Text style={[styles.linkActionText, { color: colors.accent }]}>⚡ Test</Text>
+          <Text style={[styles.linkActionText, { color: t.accent }]}>⚡ Test</Text>
         </Pressable>
         <Pressable style={[styles.linkActionBtn, styles.linkDeleteBtn]} onPress={handleDelete}>
-          <Text style={[styles.linkActionText, { color: colors.danger }]}>🗑 Eliminar</Text>
+          <Text style={[styles.linkActionText, { color: t.danger }]}>🗑 Eliminar</Text>
         </Pressable>
       </View>
     </View>
@@ -78,6 +82,10 @@ const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
 };
 
 export const SettingsScreen: React.FC = () => {
+  const { t } = useTheme();
+  const gs = useGlobalStyles();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   const telegramLinks = useAppStore((s) => s.telegramLinks);
   const addTelegramLink = useAppStore((s) => s.addTelegramLink);
   const testAllLinks = useAppStore((s) => s.testAllLinks);
@@ -114,22 +122,22 @@ export const SettingsScreen: React.FC = () => {
   }, [testAllLinks]);
 
   return (
-    <View style={globalStyles.screen}>
-      <Text style={globalStyles.title}>TELEGRAM LINKS</Text>
-      <Text style={globalStyles.subtitle}>
+    <View style={gs.screen}>
+      <Text style={gs.title}>TELEGRAM LINKS</Text>
+      <Text style={gs.subtitle}>
         {telegramLinks.length} destino{telegramLinks.length !== 1 ? 's' : ''} configurado{telegramLinks.length !== 1 ? 's' : ''}
       </Text>
 
       {/* Stats */}
       <View style={styles.statsRow}>
         <View style={styles.stat}>
-          <Text style={[styles.statNum, { color: colors.success }]}>
+          <Text style={[styles.statNum, { color: t.success }]}>
             {telegramLinks.filter((l) => l.enabled).length}
           </Text>
           <Text style={styles.statLabel}>Activos</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={[styles.statNum, { color: colors.textMuted }]}>
+          <Text style={[styles.statNum, { color: t.textMuted }]}>
             {telegramLinks.filter((l) => !l.enabled).length}
           </Text>
           <Text style={styles.statLabel}>Inactivos</Text>
@@ -142,7 +150,7 @@ export const SettingsScreen: React.FC = () => {
           <Text style={styles.addButtonText}>+ Agregar Telegram Link</Text>
         </Pressable>
       ) : (
-        <View style={globalStyles.card}>
+        <View style={gs.card}>
           <FuturisticInput
             label="Nombre / Etiqueta"
             value={label}
@@ -197,146 +205,147 @@ export const SettingsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  statsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  stat: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  statNum: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  statLabel: {
-    color: colors.textMuted,
-    fontSize: 10,
-    marginTop: 2,
-  },
-  addButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  addButtonText: {
-    color: '#001825',
-    fontWeight: '700',
-    fontSize: 14,
-    letterSpacing: 0.5,
-  },
-  cancelBtn: {
-    alignItems: 'center',
-    paddingVertical: 8,
-    marginTop: 4,
-  },
-  cancelText: {
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
-  testAllBtn: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  testAllText: {
-    color: colors.accent,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  linkCard: {
-    backgroundColor: colors.bgSoft,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-  },
-  linkHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  linkLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 8,
-  },
-  linkIcon: {
-    fontSize: 18,
-    marginRight: 6,
-  },
-  linkLabel: {
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 15,
-    flex: 1,
-  },
-  linkDetail: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginBottom: 2,
-    fontFamily: 'monospace',
-  },
-  linkActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  linkActionBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: 8,
-    paddingVertical: 6,
-    alignItems: 'center',
-  },
-  linkDeleteBtn: {
-    borderColor: colors.danger,
-  },
-  linkActionText: {
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  listContent: {
-    paddingTop: 8,
-    paddingBottom: 32,
-  },
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyIcon: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  emptyText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyHint: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 4,
-    opacity: 0.6,
-    textAlign: 'center',
-    paddingHorizontal: 32,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    statsRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 12,
+      marginBottom: 4,
+    },
+    stat: {
+      flex: 1,
+      backgroundColor: c.card,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingVertical: 8,
+      alignItems: 'center',
+    },
+    statNum: {
+      fontSize: 22,
+      fontWeight: '700',
+    },
+    statLabel: {
+      color: c.textMuted,
+      fontSize: 10,
+      marginTop: 2,
+    },
+    addButton: {
+      backgroundColor: c.accent,
+      borderRadius: 12,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    addButtonText: {
+      color: c.accentButtonText,
+      fontWeight: '700',
+      fontSize: 14,
+      letterSpacing: 0.5,
+    },
+    cancelBtn: {
+      alignItems: 'center',
+      paddingVertical: 8,
+      marginTop: 4,
+    },
+    cancelText: {
+      color: c.textMuted,
+      fontWeight: '600',
+    },
+    testAllBtn: {
+      borderWidth: 1,
+      borderColor: c.accent,
+      borderRadius: 10,
+      paddingVertical: 10,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    testAllText: {
+      color: c.accent,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    linkCard: {
+      backgroundColor: c.bgSoft,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 8,
+    },
+    linkHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    linkLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      marginRight: 8,
+    },
+    linkIcon: {
+      fontSize: 18,
+      marginRight: 6,
+    },
+    linkLabel: {
+      color: c.text,
+      fontWeight: '700',
+      fontSize: 15,
+      flex: 1,
+    },
+    linkDetail: {
+      color: c.textMuted,
+      fontSize: 12,
+      marginBottom: 2,
+      fontFamily: 'monospace',
+    },
+    linkActions: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 8,
+    },
+    linkActionBtn: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: c.accent,
+      borderRadius: 8,
+      paddingVertical: 6,
+      alignItems: 'center',
+    },
+    linkDeleteBtn: {
+      borderColor: c.danger,
+    },
+    linkActionText: {
+      fontWeight: '700',
+      fontSize: 12,
+    },
+    listContent: {
+      paddingTop: 8,
+      paddingBottom: 32,
+    },
+    empty: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyIcon: {
+      fontSize: 40,
+      marginBottom: 8,
+    },
+    emptyText: {
+      color: c.textMuted,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    emptyHint: {
+      color: c.textMuted,
+      fontSize: 12,
+      marginTop: 4,
+      opacity: 0.6,
+      textAlign: 'center',
+      paddingHorizontal: 32,
+    },
+  });

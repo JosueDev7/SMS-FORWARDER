@@ -1,17 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { logger, LogEntry, LogLevel } from '@shared/utils/logger';
-import { globalStyles } from '@presentation/theme/globalStyles';
-import { colors } from '@presentation/theme/colors';
+import { useGlobalStyles } from '@presentation/theme/globalStyles';
+import { useTheme } from '@presentation/theme/ThemeContext';
+import { ThemeColors } from '@presentation/theme/colors';
 
 const LEVELS: Array<LogLevel | 'ALL'> = ['ALL', 'DEBUG', 'INFO', 'WARN', 'ERROR'];
 
-const LEVEL_COLORS: Record<LogLevel, string> = {
-  DEBUG: colors.textMuted,
-  INFO: colors.accent,
-  WARN: '#F5A623',
-  ERROR: colors.danger,
-};
+function getLevelColor(level: LogLevel, c: ThemeColors): string {
+  const map: Record<LogLevel, string> = {
+    DEBUG: c.textMuted,
+    INFO: c.accent,
+    WARN: c.warning,
+    ERROR: c.danger,
+  };
+  return map[level];
+}
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -23,6 +27,10 @@ function formatTime(ts: number): string {
 }
 
 export const LogsScreen: React.FC = () => {
+  const { t } = useTheme();
+  const gs = useGlobalStyles();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   const [entries, setEntries] = useState<LogEntry[]>(() => logger.getEntries());
   const [levelFilter, setLevelFilter] = useState<LogLevel | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
@@ -65,11 +73,11 @@ export const LogsScreen: React.FC = () => {
   }, []);
 
   const renderItem = useCallback(({ item }: { item: LogEntry }) => {
-    const levelColor = LEVEL_COLORS[item.level];
+    const lc = getLevelColor(item.level, t);
     return (
       <View style={styles.entry}>
         <View style={styles.entryHeader}>
-          <Text style={[styles.levelBadge, { color: levelColor, borderColor: levelColor }]}>
+          <Text style={[styles.levelBadge, { color: lc, borderColor: lc }]}>
             {item.level}
           </Text>
           <Text style={styles.tag} numberOfLines={1}>
@@ -82,12 +90,12 @@ export const LogsScreen: React.FC = () => {
         </Text>
       </View>
     );
-  }, []);
+  }, [t, styles]);
 
   return (
-    <View style={globalStyles.screen}>
-      <Text style={globalStyles.title}>DEBUG LOGS</Text>
-      <Text style={globalStyles.subtitle}>
+    <View style={gs.screen}>
+      <Text style={gs.title}>DEBUG LOGS</Text>
+      <Text style={gs.subtitle}>
         {filtered.length} entrada{filtered.length !== 1 ? 's' : ''} • toca un mensaje para seleccionar
       </Text>
 
@@ -95,7 +103,7 @@ export const LogsScreen: React.FC = () => {
       <TextInput
         style={styles.searchInput}
         placeholder="Buscar tag o mensaje..."
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={t.textMuted}
         value={search}
         onChangeText={setSearch}
         clearButtonMode="while-editing"
@@ -105,7 +113,7 @@ export const LogsScreen: React.FC = () => {
       <View style={styles.filterRow}>
         {LEVELS.map((lvl) => {
           const isActive = levelFilter === lvl;
-          const chipColor = lvl === 'ALL' ? colors.accent : LEVEL_COLORS[lvl as LogLevel];
+          const chipColor = lvl === 'ALL' ? t.accent : getLevelColor(lvl as LogLevel, t);
           return (
             <Pressable
               key={lvl}
@@ -129,12 +137,12 @@ export const LogsScreen: React.FC = () => {
             void handleShare();
           }}
         >
-          <Text style={[styles.actionBtnText, { color: colors.accent }]}>
+          <Text style={[styles.actionBtnText, { color: t.accent }]}>
             Copiar / Compartir
           </Text>
         </Pressable>
         <Pressable style={[styles.actionBtn, styles.clearBtn]} onPress={handleClear}>
-          <Text style={[styles.actionBtnText, { color: colors.danger }]}>Limpiar</Text>
+          <Text style={[styles.actionBtnText, { color: t.danger }]}>Limpiar</Text>
         </Pressable>
       </View>
 
@@ -156,114 +164,115 @@ export const LogsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  searchInput: {
-    marginTop: 12,
-    backgroundColor: colors.card,
-    color: colors.text,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    marginTop: 8,
-    gap: 6,
-  },
-  filterChip: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingVertical: 5,
-    alignItems: 'center',
-  },
-  filterChipText: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  actionBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 9,
-    alignItems: 'center',
-  },
-  shareBtn: {
-    borderColor: colors.accent,
-  },
-  clearBtn: {
-    borderColor: colors.danger,
-  },
-  actionBtnText: {
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  entry: {
-    backgroundColor: colors.bgSoft,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 6,
-  },
-  entryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 3,
-    gap: 6,
-  },
-  levelBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  tag: {
-    color: colors.textMuted,
-    fontSize: 11,
-    flex: 1,
-  },
-  time: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontFamily: 'monospace',
-  },
-  message: {
-    color: colors.text,
-    fontSize: 13,
-    fontFamily: 'monospace',
-  },
-  listContent: {
-    paddingTop: 4,
-    paddingBottom: 32,
-  },
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyHint: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 4,
-    opacity: 0.6,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    searchInput: {
+      marginTop: 12,
+      backgroundColor: c.card,
+      color: c.text,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      fontSize: 14,
+    },
+    filterRow: {
+      flexDirection: 'row',
+      marginTop: 8,
+      gap: 6,
+    },
+    filterChip: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingVertical: 5,
+      alignItems: 'center',
+    },
+    filterChipText: {
+      color: c.textMuted,
+      fontSize: 10,
+      fontWeight: '700',
+    },
+    actionRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 8,
+      marginBottom: 4,
+    },
+    actionBtn: {
+      flex: 1,
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingVertical: 9,
+      alignItems: 'center',
+    },
+    shareBtn: {
+      borderColor: c.accent,
+    },
+    clearBtn: {
+      borderColor: c.danger,
+    },
+    actionBtnText: {
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    entry: {
+      backgroundColor: c.bgSoft,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 8,
+      marginBottom: 6,
+    },
+    entryHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 3,
+      gap: 6,
+    },
+    levelBadge: {
+      fontSize: 10,
+      fontWeight: '700',
+      borderWidth: 1,
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    tag: {
+      color: c.textMuted,
+      fontSize: 11,
+      flex: 1,
+    },
+    time: {
+      color: c.textMuted,
+      fontSize: 10,
+      fontFamily: 'monospace',
+    },
+    message: {
+      color: c.text,
+      fontSize: 13,
+      fontFamily: 'monospace',
+    },
+    listContent: {
+      paddingTop: 4,
+      paddingBottom: 32,
+    },
+    empty: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyText: {
+      color: c.textMuted,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    emptyHint: {
+      color: c.textMuted,
+      fontSize: 12,
+      marginTop: 4,
+      opacity: 0.6,
+    },
+  });

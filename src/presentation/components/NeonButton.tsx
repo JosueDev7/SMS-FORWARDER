@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors } from '@presentation/theme/colors';
+import { useTheme } from '@presentation/theme/ThemeContext';
+import { ThemeColors } from '@presentation/theme/colors';
 
 interface Props {
   title: string;
@@ -9,6 +10,9 @@ interface Props {
 }
 
 export const NeonButton: React.FC<Props> = ({ title, onPress, disabled }) => {
+  const { t } = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   return (
     <Pressable
       onPress={onPress}
@@ -24,24 +28,25 @@ export const NeonButton: React.FC<Props> = ({ title, onPress, disabled }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  text: {
-    color: '#001825',
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  disabled: {
-    backgroundColor: colors.accentSoft,
-    opacity: 0.6,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    button: {
+      backgroundColor: c.accent,
+      borderRadius: 12,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    text: {
+      color: c.accentButtonText,
+      fontWeight: '700',
+      letterSpacing: 0.8,
+    },
+    pressed: {
+      opacity: 0.8,
+    },
+    disabled: {
+      backgroundColor: c.accentSoft,
+      opacity: 0.6,
+    },
+  });

@@ -1,12 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAppStore } from '@presentation/context/appStore';
 import { EventItem } from '@presentation/components/EventItem';
-import { globalStyles } from '@presentation/theme/globalStyles';
-import { colors } from '@presentation/theme/colors';
+import { useGlobalStyles } from '@presentation/theme/globalStyles';
+import { useTheme } from '@presentation/theme/ThemeContext';
+import { ThemeColors } from '@presentation/theme/colors';
 import { checkSmsPermissions, requestSmsPermissions } from '@infrastructure/native/permissions';
 
 export const HomeScreen: React.FC = () => {
+  const { t } = useTheme();
+  const gs = useGlobalStyles();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   const events = useAppStore((state) => state.events);
   const serviceEnabled = useAppStore((state) => state.serviceEnabled);
   const nativeLinked = useAppStore((state) => state.nativeLinked);
@@ -42,9 +47,9 @@ export const HomeScreen: React.FC = () => {
   );
 
   return (
-    <View style={globalStyles.screen}>
-      <Text style={globalStyles.title}>EVENT FEED</Text>
-      <Text style={globalStyles.subtitle}>Ultimos 50 eventos del servicio</Text>
+    <View style={gs.screen}>
+      <Text style={gs.title}>EVENT FEED</Text>
+      <Text style={gs.subtitle}>Ultimos 50 eventos del servicio</Text>
 
       {/* Permission warning */}
       {permissionsGranted === false && (
@@ -55,7 +60,7 @@ export const HomeScreen: React.FC = () => {
         </Pressable>
       )}
 
-      <View style={[globalStyles.card, styles.switchRow]}>
+      <View style={[gs.card, styles.switchRow]}>
         <View>
           <Text style={styles.switchLabel}>Servicio de Intercepcion</Text>
           <Text style={styles.switchHint}>{serviceEnabled ? 'Activo' : 'Inactivo'}</Text>
@@ -66,8 +71,8 @@ export const HomeScreen: React.FC = () => {
           onValueChange={(value) => {
             void handleToggle(value);
           }}
-          trackColor={{ false: '#31425A', true: colors.accentSoft }}
-          thumbColor={serviceEnabled ? colors.accent : '#A4B6D4'}
+          trackColor={{ false: t.switchTrackOff, true: t.accentSoft }}
+          thumbColor={serviceEnabled ? t.accent : t.switchThumbOff}
         />
       </View>
 
@@ -81,41 +86,42 @@ export const HomeScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  permissionBanner: {
-    backgroundColor: '#3A2000',
-    borderColor: '#F5A623',
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 10,
-  },
-  permissionText: {
-    color: '#F5A623',
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 14,
-  },
-  switchLabel: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  switchHint: {
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  warning: {
-    color: colors.danger,
-    marginTop: 4,
-  },
-  listContent: {
-    paddingTop: 12,
-    paddingBottom: 32,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    permissionBanner: {
+      backgroundColor: c.warning + '20',
+      borderColor: c.warning,
+      borderWidth: 1,
+      borderRadius: 10,
+      padding: 10,
+      marginTop: 10,
+    },
+    permissionText: {
+      color: c.warning,
+      fontSize: 13,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    switchRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 14,
+    },
+    switchLabel: {
+      color: c.text,
+      fontWeight: '700',
+    },
+    switchHint: {
+      color: c.textMuted,
+      marginTop: 4,
+    },
+    warning: {
+      color: c.danger,
+      marginTop: 4,
+    },
+    listContent: {
+      paddingTop: 12,
+      paddingBottom: 32,
+    },
+  });

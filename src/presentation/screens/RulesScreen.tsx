@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { FuturisticInput } from '@presentation/components/FuturisticInput';
 import { NeonButton } from '@presentation/components/NeonButton';
 import { useAppStore } from '@presentation/context/appStore';
-import { globalStyles } from '@presentation/theme/globalStyles';
-import { colors } from '@presentation/theme/colors';
+import { useGlobalStyles } from '@presentation/theme/globalStyles';
+import { useTheme } from '@presentation/theme/ThemeContext';
+import { ThemeColors } from '@presentation/theme/colors';
 
 export const RulesScreen: React.FC = () => {
+  const { t } = useTheme();
+  const gs = useGlobalStyles();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   const rules = useAppStore((state) => state.rules);
   const createRule = useAppStore((state) => state.createRule);
   const updateRule = useAppStore((state) => state.updateRule);
@@ -17,11 +22,11 @@ export const RulesScreen: React.FC = () => {
   const [useRegex, setUseRegex] = useState(false);
 
   return (
-    <View style={globalStyles.screen}>
-      <Text style={globalStyles.title}>RULE ENGINE</Text>
-      <Text style={globalStyles.subtitle}>Reglas para filtrar y reenviar SMS</Text>
+    <View style={gs.screen}>
+      <Text style={gs.title}>RULE ENGINE</Text>
+      <Text style={gs.subtitle}>Reglas para filtrar y reenviar SMS</Text>
 
-      <View style={globalStyles.card}>
+      <View style={gs.card}>
         <FuturisticInput label="Nombre" value={name} onChangeText={setName} placeholder="Banco principal" />
         <FuturisticInput
           label="Patron"
@@ -34,8 +39,8 @@ export const RulesScreen: React.FC = () => {
           <Switch
             value={useRegex}
             onValueChange={setUseRegex}
-            trackColor={{ false: '#31425A', true: colors.accentSoft }}
-            thumbColor={useRegex ? colors.accent : '#A4B6D4'}
+            trackColor={{ false: t.switchTrackOff, true: t.accentSoft }}
+            thumbColor={useRegex ? t.accent : t.switchThumbOff}
           />
         </View>
         <NeonButton
@@ -64,8 +69,8 @@ export const RulesScreen: React.FC = () => {
                 onValueChange={(value) => {
                   void updateRule({ ...item, enabled: value });
                 }}
-                trackColor={{ false: '#31425A', true: colors.accentSoft }}
-                thumbColor={item.enabled ? colors.accent : '#A4B6D4'}
+                trackColor={{ false: t.switchTrackOff, true: t.accentSoft }}
+                thumbColor={item.enabled ? t.accent : t.switchThumbOff}
               />
             </View>
             <Text style={styles.pattern}>{item.pattern}</Text>
@@ -85,51 +90,52 @@ export const RulesScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  rowText: {
-    color: colors.text,
-  },
-  ruleCard: {
-    backgroundColor: colors.bgSoft,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-  },
-  ruleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  ruleName: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  pattern: {
-    color: colors.accent,
-    marginTop: 4,
-  },
-  mode: {
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  deleteButton: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  deleteText: {
-    color: colors.danger,
-  },
-});
+const createStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    rowText: {
+      color: c.text,
+    },
+    ruleCard: {
+      backgroundColor: c.bgSoft,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 10,
+    },
+    ruleHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    ruleName: {
+      color: c.text,
+      fontWeight: '700',
+    },
+    pattern: {
+      color: c.accent,
+      marginTop: 4,
+    },
+    mode: {
+      color: c.textMuted,
+      marginTop: 4,
+    },
+    deleteButton: {
+      marginTop: 10,
+      alignSelf: 'flex-start',
+      borderWidth: 1,
+      borderColor: c.danger,
+      borderRadius: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    deleteText: {
+      color: c.danger,
+    },
+  });
