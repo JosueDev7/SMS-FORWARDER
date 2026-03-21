@@ -4,4 +4,5 @@ export const STORAGE_KEYS = {
   EVENTS: '@sms_forwarder/events',
   MESSAGES: '@sms_forwarder/messages',
   THEME: '@sms_forwarder/theme',
+  LANGUAGE: '@sms_forwarder/language',
 } as const;

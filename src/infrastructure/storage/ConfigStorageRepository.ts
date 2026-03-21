@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Config } from '@domain/entities/Config';
+import { Config, DEFAULT_SCHEDULE } from '@domain/entities/Config';
 import { ConfigRepository } from '@domain/repositories/ConfigRepository';
 import { STORAGE_KEYS } from '@infrastructure/storage/keys';
 
@@ -8,6 +8,7 @@ const DEFAULT_CONFIG: Config = {
   telegramChatId: '',
   telegramLinks: [],
   serviceEnabled: false,
+  schedule: DEFAULT_SCHEDULE,
 };
 
 export class ConfigStorageRepository implements ConfigRepository {
@@ -37,6 +38,7 @@ export class ConfigStorageRepository implements ConfigRepository {
         telegramChatId: parsed.telegramChatId ?? '',
         telegramLinks: links,
         serviceEnabled: parsed.serviceEnabled ?? false,
+        schedule: parsed.schedule ?? DEFAULT_SCHEDULE,
       };
     }
 
@@ -45,6 +47,7 @@ export class ConfigStorageRepository implements ConfigRepository {
       telegramChatId: parsed.telegramChatId ?? '',
       telegramLinks: parsed.telegramLinks,
       serviceEnabled: parsed.serviceEnabled ?? false,
+      schedule: parsed.schedule ?? DEFAULT_SCHEDULE,
     };
   }
 

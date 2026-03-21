@@ -4,6 +4,8 @@ import { logger, LogEntry, LogLevel } from '@shared/utils/logger';
 import { useGlobalStyles } from '@presentation/theme/globalStyles';
 import { useTheme } from '@presentation/theme/ThemeContext';
 import { ThemeColors } from '@presentation/theme/colors';
+import { useI18n } from '@shared/i18n/LanguageContext';
+import { fmt } from '@shared/i18n/translations';
 
 const LEVELS: Array<LogLevel | 'ALL'> = ['ALL', 'DEBUG', 'INFO', 'WARN', 'ERROR'];
 
@@ -28,6 +30,7 @@ function formatTime(ts: number): string {
 
 export const LogsScreen: React.FC = () => {
   const { t } = useTheme();
+  const { s } = useI18n();
   const gs = useGlobalStyles();
   const styles = useMemo(() => createStyles(t), [t]);
 
@@ -94,15 +97,15 @@ export const LogsScreen: React.FC = () => {
 
   return (
     <View style={gs.screen}>
-      <Text style={gs.title}>DEBUG LOGS</Text>
+      <Text style={gs.title}>{s.logs.title}</Text>
       <Text style={gs.subtitle}>
-        {filtered.length} entrada{filtered.length !== 1 ? 's' : ''} • toca un mensaje para seleccionar
+        {fmt(s.logs.subtitle, filtered.length)}
       </Text>
 
       {/* Search input */}
       <TextInput
         style={styles.searchInput}
-        placeholder="Buscar tag o mensaje..."
+        placeholder={s.logs.searchPlaceholder}
         placeholderTextColor={t.textMuted}
         value={search}
         onChangeText={setSearch}
@@ -138,19 +141,19 @@ export const LogsScreen: React.FC = () => {
           }}
         >
           <Text style={[styles.actionBtnText, { color: t.accent }]}>
-            Copiar / Compartir
+            {s.logs.copyShare}
           </Text>
         </Pressable>
         <Pressable style={[styles.actionBtn, styles.clearBtn]} onPress={handleClear}>
-          <Text style={[styles.actionBtnText, { color: t.danger }]}>Limpiar</Text>
+          <Text style={[styles.actionBtnText, { color: t.danger }]}>{s.logs.clear}</Text>
         </Pressable>
       </View>
 
       {/* Log list */}
       {filtered.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>Sin logs todavía.</Text>
-          <Text style={styles.emptyHint}>Los logs aparecen al usar la app.</Text>
+          <Text style={styles.emptyText}>{s.logs.empty}</Text>
+          <Text style={styles.emptyHint}>{s.logs.emptyHint}</Text>
         </View>
       ) : (
         <FlatList

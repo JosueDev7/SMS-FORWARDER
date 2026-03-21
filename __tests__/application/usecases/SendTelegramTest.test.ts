@@ -1,6 +1,6 @@
 import { SendTelegramTest } from '@application/usecases/SendTelegramTest';
 import { TelegramGateway } from '@application/ports/TelegramGateway';
-import { Config } from '@domain/entities/Config';
+import { Config, DEFAULT_SCHEDULE } from '@domain/entities/Config';
 import { EventLog } from '@domain/entities/EventLog';
 import { ConfigRepository } from '@domain/repositories/ConfigRepository';
 import { EventRepository } from '@domain/repositories/EventRepository';
@@ -43,7 +43,11 @@ describe('SendTelegramTest', () => {
       new InMemoryConfigRepository({
         telegramBotTokenBase64: encodeBase64('token'),
         telegramChatId: 'chat-id',
+        telegramLinks: [
+          { id: 'link-1', label: 'Test', botTokenBase64: encodeBase64('token'), chatId: 'chat-id', enabled: true },
+        ],
         serviceEnabled: true,
+        schedule: DEFAULT_SCHEDULE,
       }),
       gateway,
       events,
@@ -60,12 +64,14 @@ describe('SendTelegramTest', () => {
       new InMemoryConfigRepository({
         telegramBotTokenBase64: '',
         telegramChatId: '',
+        telegramLinks: [],
         serviceEnabled: true,
+        schedule: DEFAULT_SCHEDULE,
       }),
       new TelegramGatewayMock(),
       new InMemoryEventRepository(),
     );
 
-    await expect(usecase.execute()).rejects.toThrow('Config incompleta para Telegram.');
+    await expect(usecase.execute()).rejects.toThrow('No hay Telegram Links activos configurados.');
   });
 });

@@ -1,10 +1,12 @@
 import { ProcessIncomingSMS } from '@application/usecases/ProcessIncomingSMS';
-import { Config } from '@domain/entities/Config';
+import { Config, DEFAULT_SCHEDULE } from '@domain/entities/Config';
 import { EventLog } from '@domain/entities/EventLog';
+import { InterceptedMessage } from '@domain/entities/InterceptedMessage';
 import { Rule } from '@domain/entities/Rule';
 import { SMS } from '@domain/entities/SMS';
 import { ConfigRepository } from '@domain/repositories/ConfigRepository';
 import { EventRepository } from '@domain/repositories/EventRepository';
+import { MessageRepository } from '@domain/repositories/MessageRepository';
 import { RuleRepository } from '@domain/repositories/RuleRepository';
 import { TelegramGateway } from '@application/ports/TelegramGateway';
 import { encodeBase64 } from '@shared/utils/base64';
@@ -68,6 +70,40 @@ class TelegramGatewayFailureMock implements TelegramGateway {
   }
 }
 
+class InMemoryMessageRepository implements MessageRepository {
+  public messages: InterceptedMessage[] = [];
+  list(limit?: number): Promise<InterceptedMessage[]> {
+    return Promise.resolve(this.messages.slice(0, limit ?? this.messages.length));
+  }
+  append(message: InterceptedMessage): Promise<void> {
+    this.messages.push(message);
+    return Promise.resolve();
+  }
+  clear(): Promise<void> {
+    this.messages = [];
+    return Promise.resolve();
+  }
+}
+
+function makeConfig(overrides: Partial<Config> = {}): Config {
+  return {
+    telegramBotTokenBase64: encodeBase64('token'),
+    telegramChatId: 'chat',
+    telegramLinks: [
+      {
+        id: 'link-1',
+        label: 'Test',
+        botTokenBase64: encodeBase64('token'),
+        chatId: 'chat',
+        enabled: true,
+      },
+    ],
+    serviceEnabled: true,
+    schedule: DEFAULT_SCHEDULE,
+    ...overrides,
+  };
+}
+
 describe('ProcessIncomingSMS', () => {
   const sms: SMS = {
     id: 'sms-1',
@@ -82,12 +118,9 @@ describe('ProcessIncomingSMS', () => {
       ruleRepository: new InMemoryRuleRepository([
         { id: 'r1', name: 'OTP', enabled: true, pattern: 'OTP', useRegex: false },
       ]),
-      configRepository: new InMemoryConfigRepository({
-        telegramBotTokenBase64: encodeBase64('token'),
-        telegramChatId: 'chat',
-        serviceEnabled: true,
-      }),
+      configRepository: new InMemoryConfigRepository(makeConfig()),
       eventRepository: new InMemoryEventRepository(),
+      messageRepository: new InMemoryMessageRepository(),
       telegramGateway: gateway,
     });
 
@@ -104,12 +137,9 @@ describe('ProcessIncomingSMS', () => {
       ruleRepository: new InMemoryRuleRepository([
         { id: 'r1', name: 'OTP', enabled: true, pattern: 'OTP', useRegex: false },
       ]),
-      configRepository: new InMemoryConfigRepository({
-        telegramBotTokenBase64: encodeBase64('token'),
-        telegramChatId: 'chat',
-        serviceEnabled: false,
-      }),
+      configRepository: new InMemoryConfigRepository(makeConfig({ serviceEnabled: false })),
       eventRepository,
+      messageRepository: new InMemoryMessageRepository(),
       telegramGateway: gateway,
     });
 
@@ -126,12 +156,9 @@ describe('ProcessIncomingSMS', () => {
       ruleRepository: new InMemoryRuleRepository([
         { id: 'r1', name: 'Regex', enabled: true, pattern: 'codigo\\s+OTP', useRegex: true },
       ]),
-      configRepository: new InMemoryConfigRepository({
-        telegramBotTokenBase64: encodeBase64('token'),
-        telegramChatId: 'chat',
-        serviceEnabled: true,
-      }),
+      configRepository: new InMemoryConfigRepository(makeConfig()),
       eventRepository: new InMemoryEventRepository(),
+      messageRepository: new InMemoryMessageRepository(),
       telegramGateway: gateway,
     });
 
@@ -148,12 +175,9 @@ describe('ProcessIncomingSMS', () => {
       ruleRepository: new InMemoryRuleRepository([
         { id: 'r1', name: 'OTP', enabled: true, pattern: 'saldo', useRegex: false },
       ]),
-      configRepository: new InMemoryConfigRepository({
-        telegramBotTokenBase64: encodeBase64('token'),
-        telegramChatId: 'chat',
-        serviceEnabled: true,
-      }),
+      configRepository: new InMemoryConfigRepository(makeConfig()),
       eventRepository,
+      messageRepository: new InMemoryMessageRepository(),
       telegramGateway: gateway,
     });
 
@@ -171,12 +195,9 @@ describe('ProcessIncomingSMS', () => {
       ruleRepository: new InMemoryRuleRepository([
         { id: 'r1', name: 'broken', enabled: true, pattern: '[a-z', useRegex: true },
       ]),
-      configRepository: new InMemoryConfigRepository({
-        telegramBotTokenBase64: encodeBase64('token'),
-        telegramChatId: 'chat',
-        serviceEnabled: true,
-      }),
+      configRepository: new InMemoryConfigRepository(makeConfig()),
       eventRepository,
+      messageRepository: new InMemoryMessageRepository(),
       telegramGateway: gateway,
     });
 
@@ -194,12 +215,17 @@ describe('ProcessIncomingSMS', () => {
       ruleRepository: new InMemoryRuleRepository([
         { id: 'r1', name: 'OTP', enabled: true, pattern: 'OTP', useRegex: false },
       ]),
-      configRepository: new InMemoryConfigRepository({
-        telegramBotTokenBase64: '',
-        telegramChatId: '',
-        serviceEnabled: true,
-      }),
+      configRepository: new InMemoryConfigRepository(
+        makeConfig({
+          telegramBotTokenBase64: '',
+          telegramChatId: '',
+          telegramLinks: [
+            { id: 'link-1', label: 'Test', botTokenBase64: '', chatId: '', enabled: true },
+          ],
+        }),
+      ),
       eventRepository,
+      messageRepository: new InMemoryMessageRepository(),
       telegramGateway: gateway,
     });
 
@@ -216,12 +242,9 @@ describe('ProcessIncomingSMS', () => {
       ruleRepository: new InMemoryRuleRepository([
         { id: 'r1', name: 'OTP', enabled: true, pattern: 'OTP', useRegex: false },
       ]),
-      configRepository: new InMemoryConfigRepository({
-        telegramBotTokenBase64: encodeBase64('token'),
-        telegramChatId: 'chat',
-        serviceEnabled: true,
-      }),
+      configRepository: new InMemoryConfigRepository(makeConfig()),
       eventRepository,
+      messageRepository: new InMemoryMessageRepository(),
       telegramGateway: new TelegramGatewayFailureMock(),
     });
 

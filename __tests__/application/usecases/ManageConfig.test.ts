@@ -1,5 +1,5 @@
 import { ManageConfig } from '@application/usecases/ManageConfig';
-import { Config } from '@domain/entities/Config';
+import { Config, DEFAULT_SCHEDULE } from '@domain/entities/Config';
 import { ConfigRepository } from '@domain/repositories/ConfigRepository';
 import { decodeBase64 } from '@shared/utils/base64';
 
@@ -19,7 +19,9 @@ describe('ManageConfig', () => {
     const repository = new InMemoryConfigRepository({
       telegramBotTokenBase64: '',
       telegramChatId: '',
+      telegramLinks: [],
       serviceEnabled: false,
+      schedule: DEFAULT_SCHEDULE,
     });
 
     const usecase = new ManageConfig(repository);
@@ -39,7 +41,9 @@ describe('ManageConfig', () => {
     const repository = new InMemoryConfigRepository({
       telegramBotTokenBase64: 'ZXhpc3RpbmctdG9rZW4=',
       telegramChatId: 'old',
+      telegramLinks: [],
       serviceEnabled: false,
+      schedule: DEFAULT_SCHEDULE,
     });
 
     const usecase = new ManageConfig(repository);

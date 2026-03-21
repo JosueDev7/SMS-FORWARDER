@@ -15,10 +15,12 @@ import { useGlobalStyles } from '@presentation/theme/globalStyles';
 import { useTheme } from '@presentation/theme/ThemeContext';
 import { ThemeColors } from '@presentation/theme/colors';
 import { TelegramLink } from '@domain/entities/Config';
+import { useI18n } from '@shared/i18n/LanguageContext';
+import { fmt } from '@shared/i18n/translations';
 
 const normalizeError = (error: unknown): string => {
   if (error instanceof Error) return error.message;
-  return 'Error desconocido.';
+  return 'Unknown error';
 };
 
 interface LinkCardProps {
@@ -27,6 +29,7 @@ interface LinkCardProps {
 
 const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
   const { t } = useTheme();
+  const { s } = useI18n();
   const styles = useMemo(() => createStyles(t), [t]);
 
   const updateTelegramLink = useAppStore((s) => s.updateTelegramLink);
@@ -35,20 +38,20 @@ const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
 
   const handleTest = useCallback(() => {
     void testLink(link.id)
-      .then(() => Alert.alert('Éxito', `Conexión con "${link.label}" correcta.`))
-      .catch((e: unknown) => Alert.alert('Error', normalizeError(e)));
-  }, [link.id, link.label, testLink]);
+      .then(() => Alert.alert(s.telegram.testSuccessTitle, fmt(s.telegram.testSuccessMsg, link.label)))
+      .catch((e: unknown) => Alert.alert(s.common.error, normalizeError(e)));
+  }, [link.id, link.label, testLink, s]);
 
   const handleDelete = useCallback(() => {
-    Alert.alert('Eliminar', `¿Eliminar link "${link.label}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(s.telegram.deleteTitle, fmt(s.telegram.deleteMsg, link.label), [
+      { text: s.common.cancel, style: 'cancel' },
       {
-        text: 'Eliminar',
+        text: s.common.delete,
         style: 'destructive',
         onPress: () => void removeTelegramLink(link.id),
       },
     ]);
-  }, [link.id, link.label, removeTelegramLink]);
+  }, [link.id, link.label, removeTelegramLink, s]);
 
   return (
     <View style={styles.linkCard}>
@@ -71,10 +74,10 @@ const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
 
       <View style={styles.linkActions}>
         <Pressable style={styles.linkActionBtn} onPress={handleTest}>
-          <Text style={[styles.linkActionText, { color: t.accent }]}>⚡ Test</Text>
-        </Pressable>
+          <Text style={[styles.linkActionText, { color: t.accent }]}>{s.telegram.testBtn}</Text>
+     </Pressable>
         <Pressable style={[styles.linkActionBtn, styles.linkDeleteBtn]} onPress={handleDelete}>
-          <Text style={[styles.linkActionText, { color: t.danger }]}>🗑 Eliminar</Text>
+          <Text style={[styles.linkActionText, { color: t.danger }]}>{s.telegram.deleteBtn}</Text>
         </Pressable>
       </View>
     </View>
@@ -83,6 +86,7 @@ const LinkCard: React.FC<LinkCardProps> = ({ link }) => {
 
 export const SettingsScreen: React.FC = () => {
   const { t } = useTheme();
+  const { s } = useI18n();
   const gs = useGlobalStyles();
   const styles = useMemo(() => createStyles(t), [t]);
 
@@ -97,7 +101,7 @@ export const SettingsScreen: React.FC = () => {
 
   const handleAdd = useCallback(() => {
     if (!label.trim() || !token.trim() || !chatId.trim()) {
-      Alert.alert('Error', 'Todos los campos son obligatorios.');
+      Alert.alert(s.common.error, s.telegram.allFieldsRequired);
       return;
     }
     void addTelegramLink({
@@ -106,26 +110,26 @@ export const SettingsScreen: React.FC = () => {
       chatId: chatId.trim(),
     })
       .then(() => {
-        Alert.alert('Guardado', `Link "${label.trim()}" agregado.`);
+        Alert.alert(s.telegram.savedTitle, fmt(s.telegram.savedMsg, label.trim()));
         setLabel('');
         setToken('');
         setChatId('');
         setFormVisible(false);
       })
-      .catch((e: unknown) => Alert.alert('Error', normalizeError(e)));
-  }, [addTelegramLink, chatId, label, token]);
+      .catch((e: unknown) => Alert.alert(s.common.error, normalizeError(e)));
+  }, [addTelegramLink, chatId, label, token, s]);
 
   const handleTestAll = useCallback(() => {
     void testAllLinks()
-      .then(() => Alert.alert('Éxito', 'Todos los links activos respondieron correctamente.'))
-      .catch((e: unknown) => Alert.alert('Error', normalizeError(e)));
-  }, [testAllLinks]);
+      .then(() => Alert.alert(s.telegram.testSuccessTitle, s.telegram.testAllSuccessMsg))
+      .catch((e: unknown) => Alert.alert(s.common.error, normalizeError(e)));
+  }, [testAllLinks, s]);
 
   return (
     <View style={gs.screen}>
-      <Text style={gs.title}>TELEGRAM LINKS</Text>
+      <Text style={gs.title}>{s.telegram.title}</Text>
       <Text style={gs.subtitle}>
-        {telegramLinks.length} destino{telegramLinks.length !== 1 ? 's' : ''} configurado{telegramLinks.length !== 1 ? 's' : ''}
+        {fmt(s.telegram.subtitle, telegramLinks.length)}
       </Text>
 
       {/* Stats */}
@@ -134,45 +138,45 @@ export const SettingsScreen: React.FC = () => {
           <Text style={[styles.statNum, { color: t.success }]}>
             {telegramLinks.filter((l) => l.enabled).length}
           </Text>
-          <Text style={styles.statLabel}>Activos</Text>
+          <Text style={styles.statLabel}>{s.telegram.active}</Text>
         </View>
         <View style={styles.stat}>
           <Text style={[styles.statNum, { color: t.textMuted }]}>
             {telegramLinks.filter((l) => !l.enabled).length}
           </Text>
-          <Text style={styles.statLabel}>Inactivos</Text>
+          <Text style={styles.statLabel}>{s.telegram.inactive}</Text>
         </View>
       </View>
 
       {/* Add new form toggle */}
       {!formVisible ? (
         <Pressable style={styles.addButton} onPress={() => setFormVisible(true)}>
-          <Text style={styles.addButtonText}>+ Agregar Telegram Link</Text>
+          <Text style={styles.addButtonText}>{s.telegram.addLink}</Text>
         </Pressable>
       ) : (
         <View style={gs.card}>
           <FuturisticInput
-            label="Nombre / Etiqueta"
+            label={s.telegram.labelInput}
             value={label}
             onChangeText={setLabel}
-            placeholder='Ej: "Mi grupo", "Alertas bancarias"'
+            placeholder={s.telegram.labelPlaceholder}
           />
           <FuturisticInput
-            label="Bot Token"
+            label={s.telegram.tokenInput}
             value={token}
             onChangeText={setToken}
-            placeholder="123456:ABCDEF..."
+            placeholder={s.telegram.tokenPlaceholder}
             secureTextEntry
           />
           <FuturisticInput
-            label="Chat ID"
+            label={s.telegram.chatIdInput}
             value={chatId}
             onChangeText={setChatId}
-            placeholder="-100123456789"
+            placeholder={s.telegram.chatIdPlaceholder}
           />
-          <NeonButton title="Guardar Link" onPress={handleAdd} />
+          <NeonButton title={s.telegram.saveLink} onPress={handleAdd} />
           <Pressable style={styles.cancelBtn} onPress={() => setFormVisible(false)}>
-            <Text style={styles.cancelText}>Cancelar</Text>
+            <Text style={styles.cancelText}>{s.telegram.cancel}</Text>
           </Pressable>
         </View>
       )}
@@ -180,7 +184,7 @@ export const SettingsScreen: React.FC = () => {
       {/* Test all button */}
       {telegramLinks.length > 0 && (
         <Pressable style={styles.testAllBtn} onPress={handleTestAll}>
-          <Text style={styles.testAllText}>⚡ Test todos los links activos</Text>
+          <Text style={styles.testAllText}>{s.telegram.testAll}</Text>
         </Pressable>
       )}
 
@@ -188,10 +192,8 @@ export const SettingsScreen: React.FC = () => {
       {telegramLinks.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>📡</Text>
-          <Text style={styles.emptyText}>Sin destinos Telegram.</Text>
-          <Text style={styles.emptyHint}>
-            Agrega un Bot Token y Chat ID para empezar a reenviar SMS.
-          </Text>
+          <Text style={styles.emptyText}>{s.telegram.empty}</Text>
+          <Text style={styles.emptyHint}>{s.telegram.emptyHint}</Text>
         </View>
       ) : (
         <FlatList

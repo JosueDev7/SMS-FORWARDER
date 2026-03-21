@@ -7,9 +7,10 @@ import { MessagesScreen } from '@presentation/screens/MessagesScreen';
 import { RulesScreen } from '@presentation/screens/RulesScreen';
 import { SettingsScreen } from '@presentation/screens/SettingsScreen';
 import { LogsScreen } from '@presentation/screens/LogsScreen';
-import { AppearanceScreen } from '@presentation/screens/AppearanceScreen';
+import { ConfigScreen } from '@presentation/screens/ConfigScreen';
 import { useBootstrap } from '@presentation/hooks/useBootstrap';
 import { ThemeProvider, useTheme } from '@presentation/theme/ThemeContext';
+import { I18nProvider, useI18n } from '@shared/i18n/LanguageContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -18,12 +19,13 @@ const TAB_ICONS: Record<string, string> = {
   Mensajes: '💬',
   Reglas: '⚙',
   Telegram: '🤖',
-  Apariencia: '🎨',
+  Config: '🔧',
   Logs: '📋',
 };
 
 const AppContent: React.FC = () => {
   const { themeId, t } = useTheme();
+  const { s } = useI18n();
   useBootstrap();
 
   const baseTheme = themeId === 'light' ? DefaultTheme : DarkTheme;
@@ -65,12 +67,12 @@ const AppContent: React.FC = () => {
           },
         })}
       >
-        <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Inicio' }} />
-        <Tab.Screen name="Mensajes" component={MessagesScreen} />
-        <Tab.Screen name="Reglas" component={RulesScreen} />
-        <Tab.Screen name="Telegram" component={SettingsScreen} />
-        <Tab.Screen name="Apariencia" component={AppearanceScreen} />
-        <Tab.Screen name="Logs" component={LogsScreen} />
+        <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: s.tabs.home }} />
+        <Tab.Screen name="Mensajes" component={MessagesScreen} options={{ tabBarLabel: s.tabs.messages }} />
+        <Tab.Screen name="Reglas" component={RulesScreen} options={{ tabBarLabel: s.tabs.rules }} />
+        <Tab.Screen name="Telegram" component={SettingsScreen} options={{ tabBarLabel: s.tabs.telegram }} />
+        <Tab.Screen name="Config" component={ConfigScreen} options={{ tabBarLabel: s.tabs.config }} />
+        <Tab.Screen name="Logs" component={LogsScreen} options={{ tabBarLabel: s.tabs.logs }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
@@ -78,7 +80,9 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => (
   <ThemeProvider>
-    <AppContent />
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
   </ThemeProvider>
 );
 

@@ -10,7 +10,7 @@ export const useBootstrap = (): void => {
   const bindSmsListener = useAppStore((state) => state.bindSmsListener);
 
   useEffect(() => {
-    let unsub = () => undefined;
+    let unsub = () => { /* noop */ };
 
     const setup = async () => {
       logger.info(TAG, 'Bootstrap iniciando…');

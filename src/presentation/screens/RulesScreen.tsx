@@ -6,9 +6,11 @@ import { useAppStore } from '@presentation/context/appStore';
 import { useGlobalStyles } from '@presentation/theme/globalStyles';
 import { useTheme } from '@presentation/theme/ThemeContext';
 import { ThemeColors } from '@presentation/theme/colors';
+import { useI18n } from '@shared/i18n/LanguageContext';
 
 export const RulesScreen: React.FC = () => {
   const { t } = useTheme();
+  const { s } = useI18n();
   const gs = useGlobalStyles();
   const styles = useMemo(() => createStyles(t), [t]);
 
@@ -23,19 +25,19 @@ export const RulesScreen: React.FC = () => {
 
   return (
     <View style={gs.screen}>
-      <Text style={gs.title}>RULE ENGINE</Text>
-      <Text style={gs.subtitle}>Reglas para filtrar y reenviar SMS</Text>
+      <Text style={gs.title}>{s.rules.title}</Text>
+      <Text style={gs.subtitle}>{s.rules.subtitle}</Text>
 
       <View style={gs.card}>
-        <FuturisticInput label="Nombre" value={name} onChangeText={setName} placeholder="Banco principal" />
+        <FuturisticInput label={s.rules.nameLabel} value={name} onChangeText={setName} placeholder={s.rules.namePlaceholder} />
         <FuturisticInput
-          label="Patron"
+          label={s.rules.patternLabel}
           value={pattern}
           onChangeText={setPattern}
-          placeholder="includes o expresion regular"
+          placeholder={s.rules.patternPlaceholder}
         />
         <View style={styles.row}>
-          <Text style={styles.rowText}>Usar RegExp</Text>
+          <Text style={styles.rowText}>{s.rules.useRegex}</Text>
           <Switch
             value={useRegex}
             onValueChange={setUseRegex}
@@ -44,7 +46,7 @@ export const RulesScreen: React.FC = () => {
           />
         </View>
         <NeonButton
-          title="Crear Regla"
+          title={s.rules.create}
           onPress={() => {
             if (!name.trim() || !pattern.trim()) {
               return;
@@ -74,14 +76,14 @@ export const RulesScreen: React.FC = () => {
               />
             </View>
             <Text style={styles.pattern}>{item.pattern}</Text>
-            <Text style={styles.mode}>{item.useRegex ? 'Modo: RegExp' : 'Modo: includes'}</Text>
+            <Text style={styles.mode}>{item.useRegex ? s.rules.modeRegex : s.rules.modeIncludes}</Text>
             <Pressable
               onPress={() => {
                 void deleteRule(item.id);
               }}
               style={styles.deleteButton}
             >
-              <Text style={styles.deleteText}>Eliminar</Text>
+              <Text style={styles.deleteText}>{s.rules.deleteAction}</Text>
             </Pressable>
           </View>
         )}

@@ -13,16 +13,21 @@ import { InterceptedMessage, MessageStatus } from '@domain/entities/InterceptedM
 import { useGlobalStyles } from '@presentation/theme/globalStyles';
 import { useTheme } from '@presentation/theme/ThemeContext';
 import { ThemeColors } from '@presentation/theme/colors';
+import { useI18n } from '@shared/i18n/LanguageContext';
+import { Strings } from '@shared/i18n/translations';
 
 type Filter = MessageStatus | 'ALL';
 
 const FILTERS: Filter[] = ['ALL', 'FORWARDED', 'DROPPED', 'ERROR'];
 
-const STATUS_LABEL: Record<MessageStatus, string> = {
-  FORWARDED: 'REENVIADO',
-  DROPPED: 'IGNORADO',
-  ERROR: 'ERROR',
-};
+function getStatusLabel(status: MessageStatus, str: Strings): string {
+  const map: Record<MessageStatus, string> = {
+    FORWARDED: str.messages.statusForwarded,
+    DROPPED: str.messages.statusDropped,
+    ERROR: str.messages.statusError,
+  };
+  return map[status];
+}
 
 function getStatusColor(status: MessageStatus, c: ThemeColors): string {
   const map: Record<MessageStatus, string> = {
@@ -33,8 +38,8 @@ function getStatusColor(status: MessageStatus, c: ThemeColors): string {
   return map[status];
 }
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleString('es', {
+function formatDate(ts: number, locale: string): string {
+  return new Date(ts).toLocaleString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
@@ -50,6 +55,7 @@ interface MessageCardProps {
 
 const MessageCard: React.FC<MessageCardProps> = ({ item }) => {
   const { t } = useTheme();
+  const { locale, s } = useI18n();
   const styles = useMemo(() => createStyles(t), [t]);
   const [expanded, setExpanded] = useState(false);
   const sc = getStatusColor(item.status, t);
@@ -66,7 +72,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ item }) => {
         </Text>
         <View style={[styles.badge, { borderColor: sc }]}>
           <Text style={[styles.badgeText, { color: sc }]}>
-            {STATUS_LABEL[item.status]}
+            {getStatusLabel(item.status, s)}
           </Text>
         </View>
       </View>
@@ -78,8 +84,8 @@ const MessageCard: React.FC<MessageCardProps> = ({ item }) => {
 
       {/* Dates */}
       <View style={styles.footer}>
-        <Text style={styles.meta}>Recibido: {formatDate(item.receivedAt)}</Text>
-        <Text style={styles.meta}>Procesado: {formatDate(item.processedAt)}</Text>
+        <Text style={styles.meta}>{s.messages.received}: {formatDate(item.receivedAt, locale)}</Text>
+        <Text style={styles.meta}>{s.messages.processed}: {formatDate(item.processedAt, locale)}</Text>
       </View>
 
       {/* Error detail */}
@@ -87,13 +93,14 @@ const MessageCard: React.FC<MessageCardProps> = ({ item }) => {
         <Text style={styles.detail}>{item.statusDetail}</Text>
       ) : null}
 
-      <Text style={styles.expandHint}>{expanded ? '▲ Colapsar' : '▼ Ver completo'}</Text>
+      <Text style={styles.expandHint}>{expanded ? s.messages.collapse : s.messages.expand}</Text>
     </Pressable>
   );
 };
 
 export const MessagesScreen: React.FC = () => {
   const { t } = useTheme();
+  const { s } = useI18n();
   const gs = useGlobalStyles();
   const styles = useMemo(() => createStyles(t), [t]);
 
@@ -114,12 +121,12 @@ export const MessagesScreen: React.FC = () => {
 
   const handleClear = useCallback(() => {
     Alert.alert(
-      'Limpiar historial',
-      '¿Borrar todos los mensajes interceptados?',
+      s.messages.clearConfirmTitle,
+      s.messages.clearConfirmMsg,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: s.common.cancel, style: 'cancel' },
         {
-          text: 'Borrar',
+          text: s.common.delete,
           style: 'destructive',
           onPress: () => {
             void clearMessages();
@@ -127,7 +134,7 @@ export const MessagesScreen: React.FC = () => {
         },
       ],
     );
-  }, [clearMessages]);
+  }, [clearMessages, s]);
 
   const counts = useMemo(() => {
     const forwarded = messages.filter((m) => m.status === 'FORWARDED').length;
@@ -141,31 +148,36 @@ export const MessagesScreen: React.FC = () => {
     [],
   );
 
+  const getFilterLabel = (f: Filter): string => {
+    if (f === 'ALL') return s.messages.filterAll;
+    return getStatusLabel(f, s);
+  };
+
   return (
     <View style={gs.screen}>
-      <Text style={gs.title}>MENSAJES SMS</Text>
-      <Text style={gs.subtitle}>Interceptados y procesados por el servicio</Text>
+      <Text style={gs.title}>{s.messages.title}</Text>
+      <Text style={gs.subtitle}>{s.messages.subtitle}</Text>
 
       {/* Stats bar */}
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: t.success }]}>{counts.forwarded}</Text>
-          <Text style={styles.statLabel}>Reenviados</Text>
+          <Text style={styles.statLabel}>{s.messages.forwarded}</Text>
         </View>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: t.textMuted }]}>{counts.dropped}</Text>
-          <Text style={styles.statLabel}>Ignorados</Text>
+          <Text style={styles.statLabel}>{s.messages.dropped}</Text>
         </View>
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { color: t.danger }]}>{counts.error}</Text>
-          <Text style={styles.statLabel}>Errores</Text>
+          <Text style={styles.statLabel}>{s.messages.errors}</Text>
         </View>
       </View>
 
       {/* Search */}
       <TextInput
         style={styles.search}
-        placeholder="Buscar remitente o contenido..."
+        placeholder={s.messages.searchPlaceholder}
         placeholderTextColor={t.textMuted}
         value={search}
         onChangeText={setSearch}
@@ -188,7 +200,7 @@ export const MessagesScreen: React.FC = () => {
               onPress={() => setFilter(f)}
             >
               <Text style={[styles.chipText, isActive && { color: chipColor }]}>
-                {f === 'ALL' ? 'TODOS' : STATUS_LABEL[f as MessageStatus]}
+                {getFilterLabel(f)}
               </Text>
             </Pressable>
           );
@@ -198,10 +210,8 @@ export const MessagesScreen: React.FC = () => {
       {/* List or empty state */}
       {filtered.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>Sin mensajes.</Text>
-          <Text style={styles.emptyHint}>
-            Los SMS interceptados aparecerán aquí cuando lleguen.
-          </Text>
+          <Text style={styles.emptyText}>{s.messages.empty}</Text>
+          <Text style={styles.emptyHint}>{s.messages.emptyHint}</Text>
         </View>
       ) : (
         <FlatList
@@ -211,7 +221,7 @@ export const MessagesScreen: React.FC = () => {
           contentContainerStyle={styles.listContent}
           ListFooterComponent={
             <Pressable style={styles.clearBtn} onPress={handleClear}>
-              <Text style={styles.clearBtnText}>Limpiar historial</Text>
+              <Text style={styles.clearBtnText}>{s.messages.clearHistory}</Text>
             </Pressable>
           }
         />

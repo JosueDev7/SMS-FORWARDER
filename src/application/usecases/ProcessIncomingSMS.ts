@@ -38,14 +38,14 @@ export class ProcessIncomingSMS {
     const config = await configRepository.get();
     if (!config.serviceEnabled) {
       logger.warn(TAG, 'Servicio desactivado, SMS ignorado.');
-      const now = Date.now();
+      const ts = Date.now();
       await Promise.all([
         eventRepository.append({
           id: generateId(),
           type: 'DROPPED',
           message: 'Servicio desactivado. SMS ignorado.',
           smsId: sms.id,
-          createdAt: now,
+          createdAt: ts,
         }),
         messageRepository.append({
           id: sms.id,
@@ -54,10 +54,50 @@ export class ProcessIncomingSMS {
           receivedAt: sms.receivedAt,
           status: 'DROPPED',
           statusDetail: 'Servicio desactivado.',
-          processedAt: now,
+          processedAt: ts,
         }),
       ]);
       return;
+    }
+
+    // Check schedule
+    if (config.schedule?.enabled) {
+      const now = new Date();
+      const currentDay = now.getDay();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const startMinutes = config.schedule.startHour * 60 + config.schedule.startMinute;
+      const endMinutes = config.schedule.endHour * 60 + config.schedule.endMinute;
+
+      let inSchedule: boolean;
+      if (startMinutes <= endMinutes) {
+        inSchedule = currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+      } else {
+        inSchedule = currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+      }
+
+      if (!config.schedule.daysOfWeek[currentDay] || !inSchedule) {
+        logger.info(TAG, 'SMS fuera de horario programado, ignorado.');
+        const ts = Date.now();
+        await Promise.all([
+          eventRepository.append({
+            id: generateId(),
+            type: 'DROPPED',
+            message: 'Fuera de horario programado. SMS ignorado.',
+            smsId: sms.id,
+            createdAt: ts,
+          }),
+          messageRepository.append({
+            id: sms.id,
+            sender: sms.sender,
+            body: sms.body,
+            receivedAt: sms.receivedAt,
+            status: 'DROPPED',
+            statusDetail: 'Fuera de horario programado.',
+            processedAt: ts,
+          }),
+        ]);
+        return;
+      }
     }
 
     const enabledRules = (await ruleRepository.list()).filter((rule) => rule.enabled);

@@ -8,6 +8,24 @@ export interface TelegramLink {
   enabled: boolean;
 }
 
+export interface ScheduleConfig {
+  enabled: boolean;
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+  daysOfWeek: boolean[];
+}
+
+export const DEFAULT_SCHEDULE: ScheduleConfig = {
+  enabled: false,
+  startHour: 8,
+  startMinute: 0,
+  endHour: 17,
+  endMinute: 0,
+  daysOfWeek: [false, true, true, true, true, true, false],
+};
+
 export interface Config {
   /** @deprecated Kept for migration from v1 single-link config. */
   telegramBotTokenBase64: string;
@@ -15,6 +33,7 @@ export interface Config {
   telegramChatId: string;
   telegramLinks: TelegramLink[];
   serviceEnabled: boolean;
+  schedule: ScheduleConfig;
 }
 
 export function createTelegramLink(partial: {

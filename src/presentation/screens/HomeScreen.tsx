@@ -5,10 +5,12 @@ import { EventItem } from '@presentation/components/EventItem';
 import { useGlobalStyles } from '@presentation/theme/globalStyles';
 import { useTheme } from '@presentation/theme/ThemeContext';
 import { ThemeColors } from '@presentation/theme/colors';
+import { useI18n } from '@shared/i18n/LanguageContext';
 import { checkSmsPermissions, requestSmsPermissions } from '@infrastructure/native/permissions';
 
 export const HomeScreen: React.FC = () => {
   const { t } = useTheme();
+  const { s } = useI18n();
   const gs = useGlobalStyles();
   const styles = useMemo(() => createStyles(t), [t]);
 
@@ -27,9 +29,9 @@ export const HomeScreen: React.FC = () => {
     const granted = await requestSmsPermissions();
     setPermissionsGranted(granted);
     if (!granted) {
-      Alert.alert('Permisos', 'No se pudieron obtener todos los permisos necesarios.');
+      Alert.alert(s.home.alertPermTitle, s.home.alertPermDenied);
     }
-  }, []);
+  }, [s]);
 
   const handleToggle = useCallback(
     async (value: boolean) => {
@@ -37,34 +39,32 @@ export const HomeScreen: React.FC = () => {
         const granted = await requestSmsPermissions();
         setPermissionsGranted(granted);
         if (!granted) {
-          Alert.alert('Permisos', 'Necesitas otorgar permisos de SMS para activar el servicio.');
+          Alert.alert(s.home.alertPermTitle, s.home.alertPermRequired);
           return;
         }
       }
       await toggleService(value);
     },
-    [permissionsGranted, toggleService],
+    [permissionsGranted, toggleService, s],
   );
 
   return (
     <View style={gs.screen}>
-      <Text style={gs.title}>EVENT FEED</Text>
-      <Text style={gs.subtitle}>Ultimos 50 eventos del servicio</Text>
+      <Text style={gs.title}>{s.home.title}</Text>
+      <Text style={gs.subtitle}>{s.home.subtitle}</Text>
 
       {/* Permission warning */}
       {permissionsGranted === false && (
         <Pressable style={styles.permissionBanner} onPress={() => void handleRequestPermissions()}>
-          <Text style={styles.permissionText}>
-            ⚠ Permisos de SMS no concedidos. Toca aquí para solicitarlos.
-          </Text>
+          <Text style={styles.permissionText}>{s.home.permissionWarning}</Text>
         </Pressable>
       )}
 
       <View style={[gs.card, styles.switchRow]}>
         <View>
-          <Text style={styles.switchLabel}>Servicio de Intercepcion</Text>
-          <Text style={styles.switchHint}>{serviceEnabled ? 'Activo' : 'Inactivo'}</Text>
-          {!nativeLinked ? <Text style={styles.warning}>Modulo nativo no vinculado.</Text> : null}
+          <Text style={styles.switchLabel}>{s.home.serviceLabel}</Text>
+          <Text style={styles.switchHint}>{serviceEnabled ? s.home.active : s.home.inactive}</Text>
+          {!nativeLinked ? <Text style={styles.warning}>{s.home.nativeNotLinked}</Text> : null}
         </View>
         <Switch
           value={serviceEnabled}

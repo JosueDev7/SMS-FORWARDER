@@ -1,4 +1,4 @@
-import { Config, TelegramLink, createTelegramLink } from '@domain/entities/Config';
+import { Config, TelegramLink, ScheduleConfig, createTelegramLink } from '@domain/entities/Config';
 import { ConfigRepository } from '@domain/repositories/ConfigRepository';
 import { encodeBase64 } from '@shared/utils/base64';
 
@@ -22,8 +22,16 @@ export class ManageConfig {
       telegramChatId: params.telegramChatId ?? current.telegramChatId,
       telegramLinks: current.telegramLinks,
       serviceEnabled: params.serviceEnabled ?? current.serviceEnabled,
+      schedule: current.schedule,
     };
 
+    await this.configRepository.save(updated);
+    return updated;
+  }
+
+  async updateSchedule(schedule: ScheduleConfig): Promise<Config> {
+    const current = await this.configRepository.get();
+    const updated: Config = { ...current, schedule };
     await this.configRepository.save(updated);
     return updated;
   }

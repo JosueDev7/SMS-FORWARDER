@@ -15,7 +15,7 @@ export interface ThemeColors {
   accentButtonText: string;
 }
 
-export type ThemeId = 'dark' | 'light' | 'midnight' | 'emerald';
+export type ThemeId = 'dark' | 'light' | 'midnight' | 'emerald' | 'sunset' | 'ocean' | 'rose';
 
 export interface ThemePreset {
   id: ThemeId;
@@ -96,11 +96,68 @@ const emeraldColors: ThemeColors = {
   accentButtonText: '#022C22',
 };
 
+// ─── Sunset (warm orange tones) ─────────────────────────────────────────────
+const sunsetColors: ThemeColors = {
+  bg: '#1A0A0A',
+  bgSoft: '#241010',
+  card: '#2E1414',
+  border: '#4A2020',
+  text: '#FFE4D6',
+  textMuted: '#D4967A',
+  accent: '#FF6B35',
+  accentSoft: '#CC5228',
+  success: '#4ADE80',
+  danger: '#FF4F7B',
+  warning: '#FBBF24',
+  switchTrackOff: '#3D2222',
+  switchThumbOff: '#B08070',
+  accentButtonText: '#1A0500',
+};
+
+// ─── Ocean (deep blue/teal) ─────────────────────────────────────────────────
+const oceanColors: ThemeColors = {
+  bg: '#040D14',
+  bgSoft: '#081A28',
+  card: '#0C2236',
+  border: '#153A58',
+  text: '#D0ECF8',
+  textMuted: '#6BB3D9',
+  accent: '#00B4D8',
+  accentSoft: '#0090AD',
+  success: '#34D399',
+  danger: '#FB7185',
+  warning: '#F5A623',
+  switchTrackOff: '#1A3040',
+  switchThumbOff: '#7EAAC4',
+  accentButtonText: '#001820',
+};
+
+// ─── Rose (pink/rose) ───────────────────────────────────────────────────────
+const roseColors: ThemeColors = {
+  bg: '#140810',
+  bgSoft: '#1E0E1A',
+  card: '#2A1224',
+  border: '#44203A',
+  text: '#F8E0F0',
+  textMuted: '#C48AAE',
+  accent: '#F472B6',
+  accentSoft: '#DB2777',
+  success: '#34D399',
+  danger: '#FF4F4F',
+  warning: '#FBBF24',
+  switchTrackOff: '#352030',
+  switchThumbOff: '#B07898',
+  accentButtonText: '#1A0010',
+};
+
 export const THEME_PRESETS: ThemePreset[] = [
   { id: 'dark', label: 'Dark', icon: '🌑', colors: darkColors },
   { id: 'light', label: 'Light', icon: '☀️', colors: lightColors },
   { id: 'midnight', label: 'Midnight', icon: '🔮', colors: midnightColors },
   { id: 'emerald', label: 'Emerald', icon: '🌿', colors: emeraldColors },
+  { id: 'sunset', label: 'Sunset', icon: '🌅', colors: sunsetColors },
+  { id: 'ocean', label: 'Ocean', icon: '🌊', colors: oceanColors },
+  { id: 'rose', label: 'Rose', icon: '🌹', colors: roseColors },
 ];
 
 /** Default export for backward compat — defaults to dark. */
